@@ -7,6 +7,12 @@ import fetch from "node-fetch";
 const LM_STUDIO_API_URL = "http://127.0.0.1:1234/v1/chat/completions";
 const LM_STUDIO_MODELS_URL = "http://127.0.0.1:1234/v1/models";
 
+// Debug function for API calls
+function logApiCall(method, url, body) {
+  console.log(`[DEBUG] API Call: ${method} ${url}`);
+  if (body) console.log(`[DEBUG] Request Body: ${JSON.stringify(body)}`);
+}
+
 // Whether to use mock responses when LM Studio is not available
 const USE_MOCK_RESPONSES = true;
 
@@ -15,28 +21,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/health", (_req, res) => {
     return res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
+  
+  // LM Studio diagnostics endpoint
+  app.get("/api/lmstudio-diagnostics", async (_req, res) => {
+    try {
+      // Test basic connection
+      const testResponse = await fetch("http://127.0.0.1:1234/", {
+        method: "GET",
+        signal: AbortSignal.timeout(2000)
+      }).catch(err => ({ ok: false, error: String(err) }));
+      
+      // Test models endpoint
+      const modelsResponse = await fetch(LM_STUDIO_MODELS_URL, {
+        method: "GET",
+        headers: { "Accept": "application/json" },
+        signal: AbortSignal.timeout(2000)
+      }).catch(err => ({ ok: false, error: String(err) }));
+      
+      let modelsData = null;
+      if (modelsResponse.ok) {
+        try {
+          modelsData = await modelsResponse.json();
+        } catch (e) {
+          modelsData = { parseError: String(e) };
+        }
+      }
+      
+      return res.json({
+        baseEndpoint: {
+          reachable: testResponse.ok === true,
+          error: testResponse.ok ? null : String(testResponse.error || "Unknown error")
+        },
+        modelsEndpoint: {
+          reachable: modelsResponse.ok === true,
+          status: modelsResponse.status,
+          data: modelsData,
+          error: modelsResponse.ok ? null : String(modelsResponse.error || "Unknown error")
+        },
+        tips: [
+          "Make sure LM Studio is running and the API server is enabled",
+          "Check the LM Studio API server is running on port 1234",
+          "Ensure your firewall allows connections to port 1234"
+        ]
+      });
+    } catch (error) {
+      return res.status(500).json({
+        status: "error",
+        message: "Error running diagnostics",
+        error: String(error)
+      });
+    }
+  });
 
   // Endpoint to check if LM Studio is available
   app.get("/api/lmstudio-status", async (_req, res) => {
     try {
+      // Log the API call for debugging
+      logApiCall("GET", LM_STUDIO_MODELS_URL, null);
+      
       const response = await fetch(LM_STUDIO_MODELS_URL, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
+          "Accept": "application/json"
         },
         // Set a short timeout to quickly check if LM Studio is running
         signal: AbortSignal.timeout(2000)
       });
       
+      // Log response status for debugging
+      console.log(`[DEBUG] LM Studio models API response status: ${response.status}`);
+      
       if (response.ok) {
+        const data = await response.json();
+        console.log(`[DEBUG] Available models: ${JSON.stringify(data)}`);
+        
         return res.json({ 
           status: "available",
-          message: "LM Studio API is available" 
+          message: "LM Studio API is available",
+          models: data.data || [] 
         });
       } else {
+        const errorText = await response.text();
+        console.error(`[ERROR] LM Studio API error: ${errorText}`);
+        
         return res.json({ 
           status: "error",
-          message: `LM Studio API responded with status: ${response.status}` 
+          message: `LM Studio API responded with status: ${response.status}`,
+          error: errorText
         });
       }
     } catch (error) {
@@ -68,23 +140,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       try {
         // Try to use LM Studio API endpoint (local)
+        const requestBody = {
+          model: "mistral-7b-instruct-v0.3", // Using a model that exists in your LM Studio
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: message }
+          ],
+          temperature: 0.7,
+          max_tokens: 500,
+        };
+        
+        // Log the API call for debugging
+        logApiCall("POST", LM_STUDIO_API_URL, requestBody);
+        
         const response = await fetch(LM_STUDIO_API_URL, {
-          method: "POST",
+          method: "POST", // Explicitly set method to POST
           headers: {
             "Content-Type": "application/json",
+            "Accept": "application/json"
           },
-          body: JSON.stringify({
-            model: "mistral-7b-instruct-v0.3", // Using a model that exists in your LM Studio
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: message }
-            ],
-            temperature: 0.7,
-            max_tokens: 500,
-          }),
+          body: JSON.stringify(requestBody),
           // Set a longer timeout for model loading
           signal: AbortSignal.timeout(30000)
         });
+        
+        // Log response status for debugging
+        console.log(`[DEBUG] LM Studio API response status: ${response.status}`);
         
         if (!response.ok) {
           throw new Error(`LM Studio API responded with status: ${response.status}`);
