@@ -1,5 +1,5 @@
 import React from "react";
-import { Bot, AlertCircle, Volume2 } from "lucide-react";
+import { Bot, AlertCircle } from "lucide-react";
 import { VoiceButton } from "@/components/ui/voice-button";
 
 interface BotMessageProps {
@@ -21,15 +21,15 @@ const BotMessage: React.FC<BotMessageProps> = ({
 }) => {
   return (
     <div className="flex mb-4">
-      <div className="w-8 h-8 rounded-full bg-[#000080]/10 flex items-center justify-center mr-2 flex-shrink-0 self-start mt-1">
-        <Bot className="h-4 w-4 text-[#000080]" />
+      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-2 flex-shrink-0 self-start mt-1">
+        <Bot className="h-4 w-4 text-primary" />
       </div>
       <div className="flex flex-col w-full">
         <div className="flex items-start">
-          <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm max-w-[90%] flex-grow">
+          <div className="bg-card rounded-lg rounded-tl-none p-3 shadow-sm max-w-[90%] flex-grow text-card-foreground">
             {typeof content === "string" ? <p className="text-sm">{content}</p> : content}
           </div>
-          
+
           {/* Voice button (if voice is enabled) */}
           {voiceEnabled && onSpeakClick && (
             <div className="ml-2 mt-1">
@@ -43,7 +43,7 @@ const BotMessage: React.FC<BotMessageProps> = ({
             </div>
           )}
         </div>
-        
+
         {/* Mock Response Indicator */}
         {isMock && (
           <div className="flex items-center mt-1 ml-1">
@@ -53,10 +53,10 @@ const BotMessage: React.FC<BotMessageProps> = ({
             </span>
           </div>
         )}
-        
+
         {/* Additional note if provided */}
         {note && (
-          <div className="text-xs text-gray-500 mt-0.5 ml-1 max-w-[90%]">
+          <div className="text-xs text-muted-foreground mt-0.5 ml-1 max-w-[90%]">
             {note}
           </div>
         )}
