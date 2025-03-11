@@ -56,15 +56,31 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
+  // Try to serve the app on port 5000 with fallback to alternative ports
   // this serves both the API and the client
   const port = 5000;
   const isWindows = process.platform === 'win32';
-  server.listen({
-    port,
-    host: isWindows ? "localhost" : "0.0.0.0",
-    ...(isWindows ? {} : { reusePort: true }),
-  }, () => {
-    log(`serving on ${isWindows ? "localhost" : "0.0.0.0"}:${port}`);
-  });
+  
+  const startServer = (port: number, retries = 3) => {
+    server.listen({
+      port,
+      host: isWindows ? "localhost" : "0.0.0.0",
+      ...(isWindows ? {} : { reusePort: true }),
+    })
+    .on('listening', () => {
+      log(`Server started successfully on ${isWindows ? "localhost" : "0.0.0.0"}:${port}`);
+    })
+    .on('error', (err: any) => {
+      if (err.code === 'EADDRINUSE' && retries > 0) {
+        log(`Port ${port} is in use, trying port ${port + 1}...`);
+        // Try the next port
+        startServer(port + 1, retries - 1);
+      } else {
+        console.error(`Failed to start server: ${err.message}`);
+        throw err;
+      }
+    });
+  };
+  
+  startServer(port);
 })();

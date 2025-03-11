@@ -74,7 +74,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "local-model", // This is ignored by LM Studio but required for API format
+            model: "mistral-7b-instruct-v0.3", // Using a model that exists in your LM Studio
             messages: [
               { role: "system", content: systemPrompt },
               { role: "user", content: message }
@@ -82,8 +82,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             temperature: 0.7,
             max_tokens: 500,
           }),
-          // Set a reasonable timeout
-          signal: AbortSignal.timeout(10000)
+          // Set a longer timeout for model loading
+          signal: AbortSignal.timeout(30000)
         });
         
         if (!response.ok) {
@@ -91,6 +91,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         const completion = await response.json() as any;
+        
+        // Check for errors in the response
+        if (completion.error) {
+          console.error("LM Studio API error:", completion.error);
+          throw new Error(`LM Studio API error: ${completion.error.message || JSON.stringify(completion.error)}`);
+        }
+        
         const responseText = completion.choices?.[0]?.message?.content || "I apologize, but I couldn't generate a response. Please try again.";
         
         return res.json({ 
