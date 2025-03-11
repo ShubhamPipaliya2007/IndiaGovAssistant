@@ -26,7 +26,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/health", (_req, res) => {
     return res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
-  
+
   // LM Studio diagnostics endpoint
   app.get("/api/lmstudio-diagnostics", async (_req, res) => {
     try {
@@ -35,14 +35,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         method: "GET",
         signal: AbortSignal.timeout(2000)
       }).catch(err => ({ ok: false, error: String(err) }));
-      
+
       // Test models endpoint
       const modelsResponse = await fetch(LM_STUDIO_MODELS_URL, {
         method: "GET",
         headers: { "Accept": "application/json" },
         signal: AbortSignal.timeout(2000)
       }).catch(err => ({ ok: false, error: String(err) }));
-      
+
       let modelsData = null;
       if (isResponse(modelsResponse) && modelsResponse.ok) {
         try {
@@ -51,7 +51,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           modelsData = { parseError: String(e) };
         }
       }
-      
+
       return res.json({
         baseEndpoint: {
           reachable: isResponse(testResponse) ? testResponse.ok === true : Boolean((testResponse as any).ok),
@@ -83,7 +83,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Log the API call for debugging
       logApiCall("GET", LM_STUDIO_MODELS_URL, null);
-      
+
       const response = await fetch(LM_STUDIO_MODELS_URL, {
         method: "GET",
         headers: {
@@ -93,14 +93,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Set a short timeout to quickly check if LM Studio is running
         signal: AbortSignal.timeout(2000)
       });
-      
+
       // Log response status for debugging
       console.log(`[DEBUG] LM Studio models API response status: ${response.status}`);
-      
+
       if (response.ok) {
-        const data = await response.json();
+        const data = await response.json() as { data?: any[] };
         console.log(`[DEBUG] Available models: ${JSON.stringify(data)}`);
-        
+
         return res.json({ 
           status: "available",
           message: "LM Studio API is available",
@@ -109,7 +109,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         const errorText = await response.text();
         console.error(`[ERROR] LM Studio API error: ${errorText}`);
-        
+
         return res.json({ 
           status: "error",
           message: `LM Studio API responded with status: ${response.status}`,
@@ -128,7 +128,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/chat", async (req, res) => {
     try {
       const { message } = req.body;
-      
+
       if (!message || typeof message !== "string") {
         return res.status(400).json({ message: "Invalid request: message is required" });
       }
@@ -142,7 +142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       Include relevant URLs to official government websites when applicable.
       Be respectful and use a formal tone appropriate for government communication.
       If you don't know the answer, admit it and suggest contacting the relevant department.`;
-      
+
       try {
         // Try to use LM Studio API endpoint (local)
         const requestBody = {
@@ -154,10 +154,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           temperature: 0.7,
           max_tokens: 500,
         };
-        
+
         // Log the API call for debugging
         logApiCall("POST", LM_STUDIO_API_URL, requestBody);
-        
+
         const response = await fetch(LM_STUDIO_API_URL, {
           method: "POST", // Explicitly set method to POST
           headers: {
@@ -168,31 +168,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Set a longer timeout for model loading
           signal: AbortSignal.timeout(30000)
         });
-        
+
         // Log response status for debugging
         console.log(`[DEBUG] LM Studio API response status: ${response.status}`);
-        
+
         if (!response.ok) {
           throw new Error(`LM Studio API responded with status: ${response.status}`);
         }
-        
+
         const completion = await response.json() as any;
-        
+
         // Check for errors in the response
         if (completion.error) {
           console.error("LM Studio API error:", completion.error);
           throw new Error(`LM Studio API error: ${completion.error.message || JSON.stringify(completion.error)}`);
         }
-        
+
         const responseText = completion.choices?.[0]?.message?.content || "I apologize, but I couldn't generate a response. Please try again.";
-        
+
         return res.json({ 
           message: responseText,
           source: "lm-studio"
         });
       } catch (error) {
         console.error("Error connecting to LM Studio:", error);
-        
+
         if (USE_MOCK_RESPONSES) {
           // Provide mock responses for testing when LM Studio is not available
           const mockResponses: Record<string, string> = {
@@ -204,18 +204,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             "digital india": "Digital India is a flagship program launched by the Government of India with a vision to transform India into a digitally empowered society and knowledge economy. Key initiatives include BharatNet, Digital Village, DigiLocker, and UMANG app.",
             "default": "I'm your E-Governance Assistant for India. I can provide information about various government services, schemes, and digital initiatives. What specific information would you like to know about Indian e-governance services?"
           };
-          
+
           // Determine which mock response to send based on keywords in the message
           let responseToSend = mockResponses.default;
           const messageLower = message.toLowerCase();
-          
+
           for (const [keyword, response] of Object.entries(mockResponses)) {
             if (keyword !== "default" && messageLower.includes(keyword)) {
               responseToSend = response;
               break;
             }
           }
-          
+
           return res.json({
             message: responseToSend,
             source: "mock",
