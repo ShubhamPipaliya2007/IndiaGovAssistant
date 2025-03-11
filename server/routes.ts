@@ -146,11 +146,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         // Try to use LM Studio API endpoint (local)
         // From logs we can see the available models are: "mistral-7b-instruct-v0.3", "text-embedding-nomic-embed-text-v1.5", "llama-3.2-1b-instruct"
+        // Incorporate system prompt into the user message since LM Studio doesn't support system role
         const requestBody = {
           model: "mistral-7b-instruct-v0.3", // Using a model that exists in your LM Studio
           messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: message }
+            { role: "user", content: `${systemPrompt}\n\nUser question: ${message}` }
           ],
           temperature: 0.7,
           max_tokens: 500,
@@ -175,8 +175,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`[DEBUG] LM Studio API response status: ${response.status}`);
 
         if (!response.ok) {
-          console.error(`LM Studio API responded with status: ${response.status}`, await response.text());
-          throw new Error(`LM Studio API responded with status: ${response.status}`);
+          const errorText = await response.text();
+          console.error(`LM Studio API responded with status: ${response.status}`, errorText);
+          
+          // Check specifically for jinja template error related to roles
+          if (errorText.includes("Only user and assistant roles are supported")) {
+            console.error("LM Studio doesn't support system role, converting to user message format");
+            throw new Error("LM Studio API role format error");
+          } else {
+            throw new Error(`LM Studio API responded with status: ${response.status}`);
+          }
         }
 
         const completion = await response.json() as any;
