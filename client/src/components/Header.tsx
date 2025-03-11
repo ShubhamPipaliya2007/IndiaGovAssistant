@@ -11,6 +11,7 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const Header: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -103,6 +104,7 @@ const Header: React.FC = () => {
             </Button>
             <div className="w-px h-6 bg-border"></div>
             <div className="flex space-x-2">
+              <ThemeToggle />
               <Button variant="ghost" size="icon" className="text-foreground hover:text-primary">
                 <Search className="h-5 w-5" />
               </Button>
