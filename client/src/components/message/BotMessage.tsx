@@ -1,18 +1,39 @@
 import React from "react";
-import { Bot } from "lucide-react";
+import { Bot, AlertCircle } from "lucide-react";
 
 interface BotMessageProps {
   content: React.ReactNode;
+  isMock?: boolean;
+  note?: string;
 }
 
-const BotMessage: React.FC<BotMessageProps> = ({ content }) => {
+const BotMessage: React.FC<BotMessageProps> = ({ content, isMock, note }) => {
   return (
     <div className="flex mb-4">
       <div className="w-8 h-8 rounded-full bg-[#000080]/10 flex items-center justify-center mr-2 flex-shrink-0 self-start mt-1">
         <Bot className="h-4 w-4 text-[#000080]" />
       </div>
-      <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm max-w-[80%]">
-        {typeof content === "string" ? <p className="text-sm">{content}</p> : content}
+      <div className="flex flex-col">
+        <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm max-w-[80%]">
+          {typeof content === "string" ? <p className="text-sm">{content}</p> : content}
+        </div>
+        
+        {/* Mock Response Indicator */}
+        {isMock && (
+          <div className="flex items-center mt-1 ml-1">
+            <AlertCircle className="h-3 w-3 text-amber-500 mr-1" />
+            <span className="text-xs text-amber-600 italic">
+              Mock response for demo purposes
+            </span>
+          </div>
+        )}
+        
+        {/* Additional note if provided */}
+        {note && (
+          <div className="text-xs text-gray-500 mt-0.5 ml-1 max-w-[80%]">
+            {note}
+          </div>
+        )}
       </div>
     </div>
   );

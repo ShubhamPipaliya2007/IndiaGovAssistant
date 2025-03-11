@@ -11,7 +11,13 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   if (message.type === "user") {
     return <UserMessage content={message.content} />;
   } else {
-    return <BotMessage content={message.content} />;
+    return (
+      <BotMessage 
+        content={message.content} 
+        isMock={message.isMock} 
+        note={message.note} 
+      />
+    );
   }
 };
 
