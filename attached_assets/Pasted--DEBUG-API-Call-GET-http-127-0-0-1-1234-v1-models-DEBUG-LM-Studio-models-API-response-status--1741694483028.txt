@@ -1,0 +1,12 @@
+[DEBUG] API Call: GET http://127.0.0.1:1234/v1/models
+[DEBUG] LM Studio models API response status: 200
+[DEBUG] Available models: {"data":[{"id":"mistral-7b-instruct-v0.3","object":"model","owned_by":"organization_owner"},{"id":"text-embedding-nomic-embed-text-v1.5","object":"model","owned_by":"organization_owner"},{"id":"llama-3.2-1b-instruct","object":"model","owned_by":"organization_owner"}],"object":"list"}
+5:30:34 PM [express] GET /api/lmstudio-status 304 in 16ms :: {"status":"available","message":"LM Stu…
+[DEBUG] API Call: POST http://127.0.0.1:1234/v1/chat/completions
+[DEBUG] Request Body: {"model":"mistral-7b-instruct-v0.3","messages":[{"role":"system","content":"You are an AI assistant for the Government of India's E-governance portal. \n      Provide accurate, helpful information about Indian government services, initiatives, and programs.\n      Focus on e-governance initiatives like Aadhaar, DigiLocker, UMANG, MyGov, Digital India, etc.\n      Your responses should be concise, accurate, and helpful. \n      Format your responses with appropriate formatting for readability.\n      Include relevant URLs to official government websites when applicable.\n      Be respectful and use a formal tone appropriate for government communication.\n      If you don't know the answer, admit it and suggest contacting the relevant department."},{"role":"user","content":"how to Update Aadhar card online?"}],"temperature":0.7,"max_tokens":500}
+[DEBUG] LM Studio API response status: 400
+LM Studio API responded with status: 400 {"error":"Error rendering prompt with jinja template: Error: Only user and assistant roles are supported!"}
+Error connecting to LM Studio: Error: LM Studio API responded with status: 400
+    at file:///C:/Users/Shubham/Downloads/IndiaGovAssistant/IndiaGovAssistant/dist/index.js:142:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+5:30:58 PM [express] POST /api/chat 200 in 21ms :: {"message":"I'm your E-Governance Assistant for I…
