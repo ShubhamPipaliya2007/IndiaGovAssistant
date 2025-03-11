@@ -42,7 +42,11 @@ export function useChat() {
     const checkLmStudioStatus = async () => {
       try {
         const response = await fetch("/api/lmstudio-status");
-        const data = await response.json();
+        const data = await response.json() as { 
+          status: string; 
+          message: string;
+          models?: any[];
+        };
         setIsLmStudioAvailable(data.status === "available");
         
         if (data.status !== "available") {
