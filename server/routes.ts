@@ -8,7 +8,7 @@ const LM_STUDIO_API_URL = "http://127.0.0.1:1234/v1/chat/completions";
 const LM_STUDIO_MODELS_URL = "http://127.0.0.1:1234/v1/models";
 
 // Debug function for API calls
-function logApiCall(method, url, body) {
+function logApiCall(method: string, url: string, body: Record<string, any> | null) {
   console.log(`[DEBUG] API Call: ${method} ${url}`);
   if (body) console.log(`[DEBUG] Request Body: ${JSON.stringify(body)}`);
 }
