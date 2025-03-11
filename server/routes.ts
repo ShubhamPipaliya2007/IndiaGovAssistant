@@ -7,6 +7,11 @@ import fetch from "node-fetch";
 const LM_STUDIO_API_URL = "http://127.0.0.1:1234/v1/chat/completions";
 const LM_STUDIO_MODELS_URL = "http://127.0.0.1:1234/v1/models";
 
+// Type guard to check if an object is a Response object
+function isResponse(obj: any): obj is Response {
+  return obj && typeof obj.json === 'function';
+}
+
 // Debug function for API calls
 function logApiCall(method: string, url: string, body: Record<string, any> | null) {
   console.log(`[DEBUG] API Call: ${method} ${url}`);
@@ -39,7 +44,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }).catch(err => ({ ok: false, error: String(err) }));
       
       let modelsData = null;
-      if (modelsResponse.ok) {
+      if (isResponse(modelsResponse) && modelsResponse.ok) {
         try {
           modelsData = await modelsResponse.json();
         } catch (e) {
@@ -49,14 +54,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       return res.json({
         baseEndpoint: {
-          reachable: testResponse.ok === true,
-          error: testResponse.ok ? null : String(testResponse.error || "Unknown error")
+          reachable: isResponse(testResponse) ? testResponse.ok === true : Boolean((testResponse as any).ok),
+          error: isResponse(testResponse) && testResponse.ok ? null : String((testResponse as any).error || "Unknown error")
         },
         modelsEndpoint: {
-          reachable: modelsResponse.ok === true,
-          status: modelsResponse.status,
+          reachable: isResponse(modelsResponse) ? modelsResponse.ok === true : Boolean((modelsResponse as any).ok),
+          status: isResponse(modelsResponse) ? modelsResponse.status : undefined,
           data: modelsData,
-          error: modelsResponse.ok ? null : String(modelsResponse.error || "Unknown error")
+          error: isResponse(modelsResponse) && modelsResponse.ok ? null : String((modelsResponse as any).error || "Unknown error")
         },
         tips: [
           "Make sure LM Studio is running and the API server is enabled",
