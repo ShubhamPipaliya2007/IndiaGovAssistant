@@ -1,13 +1,16 @@
 import React, { useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Bot, MoreVertical } from "lucide-react";
+import { Bot, MoreVertical, VolumeX, Volume2 } from "lucide-react";
 import ChatMessage from "./message/ChatMessage";
 import UserMessage from "./message/UserMessage";
 import BotMessage from "./message/BotMessage";
 import LoadingMessage from "./message/LoadingMessage";
 import SuggestionChips from "./SuggestionChips";
+import { VoiceButton } from "@/components/ui/voice-button";
 import { useChat } from "@/lib/useChat";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 const ChatSection: React.FC = () => {
   const { 
@@ -16,7 +19,16 @@ const ChatSection: React.FC = () => {
     inputValue, 
     setInputValue, 
     sendMessage, 
-    handleSuggestionClick 
+    handleSuggestionClick,
+    // Voice-related properties
+    isListening,
+    isSpeaking,
+    speechSupported,
+    ttsSupported,
+    toggleListening,
+    toggleAutoPlay,
+    autoPlayVoice,
+    speakLastResponse
   } = useChat();
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -103,20 +115,52 @@ const ChatSection: React.FC = () => {
           onChipClick={handleSuggestionClick} 
         />
 
+        {/* Voice Output Controls */}
+        <div className="px-3 py-2 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Switch
+              id="auto-voice"
+              checked={autoPlayVoice}
+              onCheckedChange={toggleAutoPlay}
+            />
+            <Label htmlFor="auto-voice" className="text-sm text-gray-700">Auto-read responses</Label>
+          </div>
+          {ttsSupported && (
+            <VoiceButton
+              mode="output"
+              isSpeaking={isSpeaking}
+              onSpeakClick={speakLastResponse}
+              tooltipText={isSpeaking ? "Stop speaking" : "Read aloud"}
+              disabled={!messages.length}
+              className="ml-auto"
+            />
+          )}
+        </div>
+
         {/* Chat Input */}
         <div className="p-3 border-t border-gray-200 bg-white">
           <form className="flex items-center gap-2" onSubmit={handleSubmit}>
+            {speechSupported && (
+              <VoiceButton
+                mode="input"
+                isListening={isListening}
+                onListenClick={toggleListening}
+                tooltipText={isListening ? "Stop listening" : "Voice input"}
+                disabled={isLoading}
+              />
+            )}
             <Input
               type="text"
               className="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF9933] focus:border-transparent"
-              placeholder="Type your question here..."
+              placeholder={isListening ? "Listening..." : "Type your question here..."}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
+              disabled={isListening}
             />
             <Button
               type="submit"
               className="bg-[#000080] hover:bg-[#000080]/90 text-white rounded-lg p-2.5 h-10 w-10 flex items-center justify-center"
-              disabled={!inputValue.trim() || isLoading}
+              disabled={(!inputValue.trim() || isLoading) && !isListening}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -133,9 +177,16 @@ const ChatSection: React.FC = () => {
               </svg>
             </Button>
           </form>
-          <p className="text-xs text-gray-500 mt-1.5 ml-1">
-            Ask me about government services, policies, or programs in India
-          </p>
+          <div className="flex items-center justify-between mt-1.5 ml-1">
+            <p className="text-xs text-gray-500">
+              Ask me about government services, policies, or programs in India
+            </p>
+            {speechSupported && (
+              <p className="text-xs text-gray-500">
+                {isListening ? "Listening... Speak now" : ""}
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </section>
