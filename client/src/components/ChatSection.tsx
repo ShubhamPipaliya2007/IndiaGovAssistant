@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Bot, MoreVertical, VolumeX, Volume2 } from "lucide-react";
+import { Bot, MoreVertical } from "lucide-react";
 import ChatMessage from "./message/ChatMessage";
 import UserMessage from "./message/UserMessage";
 import BotMessage from "./message/BotMessage";
@@ -20,7 +20,6 @@ const ChatSection: React.FC = () => {
     setInputValue, 
     sendMessage, 
     handleSuggestionClick,
-    // Voice-related properties
     isListening,
     isSpeaking,
     speechSupported,
@@ -30,10 +29,9 @@ const ChatSection: React.FC = () => {
     autoPlayVoice,
     speakLastResponse
   } = useChat();
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom of chat when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
@@ -55,26 +53,26 @@ const ChatSection: React.FC = () => {
 
   return (
     <section className="w-full md:w-2/3 lg:w-3/4 order-1 md:order-2">
-      <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col h-[calc(100vh-160px)]">
+      <div className="bg-background rounded-xl shadow-md overflow-hidden flex flex-col h-[calc(100vh-160px)] border border-border">
         {/* Chat Header */}
-        <div className="p-4 border-b border-gray-200 bg-white">
+        <div className="p-4 border-b border-border bg-background">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full bg-[#000080]/10 flex items-center justify-center">
-                <Bot className="h-5 w-5 text-[#000080]" />
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Bot className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h2 className="font-['Poppins'] font-medium text-[#000080]">
+                <h2 className="font-['Poppins'] font-medium text-primary">
                   AI Assistant
                 </h2>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   Powered by Government of India
                 </p>
               </div>
             </div>
             <div>
               <Button variant="ghost" size="icon">
-                <MoreVertical className="h-5 w-5 text-gray-500" />
+                <MoreVertical className="h-5 w-5 text-muted-foreground" />
               </Button>
             </div>
           </div>
@@ -82,7 +80,7 @@ const ChatSection: React.FC = () => {
 
         {/* Chat Messages */}
         <div 
-          className="flex-1 overflow-y-auto p-4 bg-gray-50" 
+          className="flex-1 overflow-y-auto p-4 bg-muted/50" 
           id="chat-messages"
         >
           {/* Welcome Message */}
@@ -108,7 +106,7 @@ const ChatSection: React.FC = () => {
 
           {/* Loading Message */}
           {isLoading && <LoadingMessage />}
-          
+
           {/* Invisible div for auto-scrolling */}
           <div ref={messagesEndRef} />
         </div>
@@ -120,14 +118,14 @@ const ChatSection: React.FC = () => {
         />
 
         {/* Voice Output Controls */}
-        <div className="px-3 py-2 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+        <div className="px-3 py-2 border-t border-border bg-background/50 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Switch
               id="auto-voice"
               checked={autoPlayVoice}
               onCheckedChange={toggleAutoPlay}
             />
-            <Label htmlFor="auto-voice" className="text-sm text-gray-700">Auto-read responses</Label>
+            <Label htmlFor="auto-voice" className="text-sm text-foreground">Auto-read responses</Label>
           </div>
           {ttsSupported && (
             <VoiceButton
@@ -142,7 +140,7 @@ const ChatSection: React.FC = () => {
         </div>
 
         {/* Chat Input */}
-        <div className="p-3 border-t border-gray-200 bg-white">
+        <div className="p-3 border-t border-border bg-background">
           <form className="flex items-center gap-2" onSubmit={handleSubmit}>
             {speechSupported && (
               <VoiceButton
@@ -155,7 +153,7 @@ const ChatSection: React.FC = () => {
             )}
             <Input
               type="text"
-              className="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF9933] focus:border-transparent"
+              className="flex-1 bg-background border-border focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder={isListening ? "Listening..." : "Type your question here..."}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
@@ -163,7 +161,7 @@ const ChatSection: React.FC = () => {
             />
             <Button
               type="submit"
-              className="bg-[#000080] hover:bg-[#000080]/90 text-white rounded-lg p-2.5 h-10 w-10 flex items-center justify-center"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
               disabled={(!inputValue.trim() || isLoading) && !isListening}
             >
               <svg
@@ -182,11 +180,11 @@ const ChatSection: React.FC = () => {
             </Button>
           </form>
           <div className="flex items-center justify-between mt-1.5 ml-1">
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               Ask me about government services, policies, or programs in India
             </p>
             {speechSupported && (
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 {isListening ? "Listening... Speak now" : ""}
               </p>
             )}
