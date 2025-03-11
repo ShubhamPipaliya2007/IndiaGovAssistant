@@ -86,19 +86,23 @@ const ChatSection: React.FC = () => {
           id="chat-messages"
         >
           {/* Welcome Message */}
-          <BotMessage content={
-            <p className="text-sm">
-              🙏 Namaste! I'm your E-Governance Assistant. I can help you with information 
-              about various government services, initiatives, and programs in India. 
-              What would you like to know about?
-            </p>
-          } />
+          <BotMessage 
+            content={
+              <p className="text-sm">
+                🙏 Namaste! I'm your E-Governance Assistant. I can help you with information 
+                about various government services, initiatives, and programs in India. 
+                What would you like to know about?
+              </p>
+            }
+            voiceEnabled={ttsSupported}
+          />
 
           {/* Display Chat History */}
           {messages.map((message, index) => (
             <ChatMessage 
               key={index} 
-              message={message} 
+              message={message}
+              voiceEnabled={ttsSupported}
             />
           ))}
 
