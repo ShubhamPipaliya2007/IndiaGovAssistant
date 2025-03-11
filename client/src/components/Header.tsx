@@ -21,11 +21,13 @@ const Header: React.FC = () => {
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div className="flex items-center">
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg"
-              alt="Emblem of India"
-              className="h-12 w-auto"
-            />
+            <div className="h-12 w-12 rounded-full p-1 bg-background dark:bg-white/10 flex items-center justify-center">
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg"
+                alt="Emblem of India"
+                className="h-10 w-auto dark:brightness-200 dark:contrast-200"
+              />
+            </div>
             <div className="ml-3 border-l-2 border-border pl-3">
               <h1 className="font-['Poppins'] font-bold text-xl md:text-2xl text-primary">
                 E-Governance
