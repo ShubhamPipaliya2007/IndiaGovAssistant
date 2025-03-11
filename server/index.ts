@@ -62,24 +62,27 @@ app.use((req, res, next) => {
   const isWindows = process.platform === 'win32';
   
   const startServer = (port: number, retries = 3) => {
-    server.listen({
-      port,
-      host: isWindows ? "localhost" : "0.0.0.0",
-      ...(isWindows ? {} : { reusePort: true }),
-    })
-    .on('listening', () => {
-      log(`Server started successfully on ${isWindows ? "localhost" : "0.0.0.0"}:${port}`);
-    })
-    .on('error', (err: any) => {
-      if (err.code === 'EADDRINUSE' && retries > 0) {
-        log(`Port ${port} is in use, trying port ${port + 1}...`);
-        // Try the next port
-        startServer(port + 1, retries - 1);
-      } else {
-        console.error(`Failed to start server: ${err.message}`);
-        throw err;
-      }
-    });
+    // Create a small delay to avoid race conditions with existing server instances
+    setTimeout(() => {
+      server.listen({
+        port,
+        host: isWindows ? "localhost" : "0.0.0.0",
+        ...(isWindows ? {} : { reusePort: true }),
+      })
+      .on('listening', () => {
+        log(`Server started successfully on ${isWindows ? "localhost" : "0.0.0.0"}:${port}`);
+      })
+      .on('error', (err: any) => {
+        if (err.code === 'EADDRINUSE' && retries > 0) {
+          log(`Port ${port} is in use, trying port ${port + 1}...`);
+          // Try the next port
+          startServer(port + 1, retries - 1);
+        } else {
+          console.error(`Failed to start server: ${err.message}`);
+          throw err;
+        }
+      });
+    }, 500); // 500ms delay
   };
   
   startServer(port);

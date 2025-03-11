@@ -145,6 +145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       try {
         // Try to use LM Studio API endpoint (local)
+        // From logs we can see the available models are: "mistral-7b-instruct-v0.3", "text-embedding-nomic-embed-text-v1.5", "llama-3.2-1b-instruct"
         const requestBody = {
           model: "mistral-7b-instruct-v0.3", // Using a model that exists in your LM Studio
           messages: [
@@ -158,8 +159,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Log the API call for debugging
         logApiCall("POST", LM_STUDIO_API_URL, requestBody);
 
+        // Make sure we're using the correct HTTP method (POST) and proper JSON formatting
         const response = await fetch(LM_STUDIO_API_URL, {
-          method: "POST", // Explicitly set method to POST
+          method: "POST", // Must be POST, not GET
           headers: {
             "Content-Type": "application/json",
             "Accept": "application/json"
@@ -173,15 +175,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`[DEBUG] LM Studio API response status: ${response.status}`);
 
         if (!response.ok) {
+          console.error(`LM Studio API responded with status: ${response.status}`, await response.text());
           throw new Error(`LM Studio API responded with status: ${response.status}`);
         }
 
         const completion = await response.json() as any;
+        console.log("LM Studio API response:", JSON.stringify(completion).substring(0, 200) + "...");
 
         // Check for errors in the response
         if (completion.error) {
           console.error("LM Studio API error:", completion.error);
           throw new Error(`LM Studio API error: ${completion.error.message || JSON.stringify(completion.error)}`);
+        }
+        
+        // Handle prediction-error specifically
+        if (completion.status === "error" && completion.message?.includes("prediction-error")) {
+          console.error("LM Studio prediction error:", completion.message);
+          throw new Error("The model encountered an error generating a response. Please try again with a different prompt.");
         }
 
         const responseText = completion.choices?.[0]?.message?.content || "I apologize, but I couldn't generate a response. Please try again.";
