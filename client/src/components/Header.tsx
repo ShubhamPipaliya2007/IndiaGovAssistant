@@ -5,6 +5,8 @@ import {
   Search,
   Globe,
   Menu,
+  LogOut,
+  LogIn,
 } from "lucide-react";
 import {
   Sheet,
@@ -12,9 +14,36 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { useAuth } from "@/lib/AuthContext";
+import { signInWithGoogle, signOutUser } from "@/lib/firebase";
+import { useToast } from "@/hooks/use-toast";
 
 const Header: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  const handleAuth = async () => {
+    try {
+      if (user) {
+        await signOutUser();
+        toast({
+          title: "Logged out successfully",
+        });
+      } else {
+        await signInWithGoogle();
+        toast({
+          title: "Logged in successfully",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Authentication error",
+        description: "An error occurred during authentication",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -90,8 +119,11 @@ const Header: React.FC = () => {
                   </a>
                 </Link>
                 <div className="border-t border-border pt-4 mt-2">
-                  <Button className="w-full border border-primary text-primary bg-background hover:bg-primary hover:text-primary-foreground">
-                    Login
+                  <Button 
+                    className="w-full border border-primary text-primary bg-background hover:bg-primary hover:text-primary-foreground"
+                    onClick={handleAuth}
+                  >
+                    {user ? 'Logout' : 'Login'}
                   </Button>
                 </div>
               </nav>
@@ -101,8 +133,19 @@ const Header: React.FC = () => {
           <div className="hidden md:flex items-center space-x-2">
             <Button
               className="border border-primary text-primary bg-background hover:bg-primary hover:text-primary-foreground font-['Poppins'] text-sm font-medium"
+              onClick={handleAuth}
             >
-              Login
+              {user ? (
+                <>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </>
+              ) : (
+                <>
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Login
+                </>
+              )}
             </Button>
             <div className="w-px h-6 bg-border"></div>
             <div className="flex space-x-2">
