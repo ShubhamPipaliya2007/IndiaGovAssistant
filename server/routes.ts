@@ -139,7 +139,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Chat API endpoint
   // Image analysis endpoint
   app.post("/api/analyze-image", async (req, res) => {
     try {
@@ -150,6 +149,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       try {
+        // Check if LM Studio is available first
+        const statusResponse = await fetch(LM_STUDIO_MODELS_URL, {
+          method: "GET",
+          headers: { "Accept": "application/json" },
+          signal: AbortSignal.timeout(5000)
+        }).catch(err => ({ ok: false, error: String(err) }));
+
+        if (!statusResponse.ok) {
+          console.log("[DEBUG] LM Studio not available, using mock response");
+          throw new Error("LM Studio not available");
+        }
+
         // Try to use LM Studio for analysis
         const requestBody = {
           model: "mistral-7b-instruct-v0.3",
@@ -173,10 +184,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             "Accept": "application/json"
           },
           body: JSON.stringify(requestBody),
-          signal: AbortSignal.timeout(30000) // Increased timeout to 30 seconds
+          signal: AbortSignal.timeout(60000) // Increased timeout to 60 seconds
         });
 
         if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`[ERROR] LM Studio API error: ${errorText}`);
           throw new Error(`LM Studio API responded with status: ${response.status}`);
         }
 
