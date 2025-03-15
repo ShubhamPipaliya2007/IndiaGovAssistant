@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { AlertCircle, Upload } from "lucide-react";
+import { AlertCircle, Upload, Info } from "lucide-react";
 import { uploadImage } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 
@@ -11,6 +11,7 @@ export function ImageUpload({ onAnalysis }: { onAnalysis: (message: string) => v
   const [isLoading, setIsLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [isMockResponse, setIsMockResponse] = useState(false);
   const { toast } = useToast();
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -20,6 +21,7 @@ export function ImageUpload({ onAnalysis }: { onAnalysis: (message: string) => v
     setIsLoading(true);
     setError(null);
     setUploadProgress(0);
+    setIsMockResponse(false);
 
     try {
       const url = await uploadImage(
@@ -52,6 +54,9 @@ export function ImageUpload({ onAnalysis }: { onAnalysis: (message: string) => v
     if (!imageUrl) return;
 
     setIsLoading(true);
+    setError(null);
+    setIsMockResponse(false);
+
     try {
       const response = await fetch('/api/analyze-image', {
         method: 'POST',
@@ -66,6 +71,12 @@ export function ImageUpload({ onAnalysis }: { onAnalysis: (message: string) => v
       }
 
       const data = await response.json();
+
+      // Check if this is a mock response
+      if (data.source === 'mock') {
+        setIsMockResponse(true);
+      }
+
       onAnalysis(data.message);
     } catch (error) {
       console.error('Error analyzing image:', error);
@@ -136,6 +147,13 @@ export function ImageUpload({ onAnalysis }: { onAnalysis: (message: string) => v
             >
               {isLoading ? 'Analyzing...' : 'Analyze Image'}
             </Button>
+          </div>
+        )}
+
+        {isMockResponse && (
+          <div className="flex items-center gap-2 text-muted-foreground text-sm bg-muted p-2 rounded">
+            <Info className="h-4 w-4" />
+            <span>Using mock analysis service. Full analysis service will be available soon.</span>
           </div>
         )}
       </div>

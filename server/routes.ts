@@ -21,6 +21,15 @@ function logApiCall(method: string, url: string, body: Record<string, any> | nul
 // Whether to use mock responses when LM Studio is not available
 const USE_MOCK_RESPONSES = true;
 
+// Mock responses for image analysis
+const mockImageAnalysis = {
+  "aadhar_card": "This appears to be an Aadhaar card. Aadhaar is India's biometric ID system. The card contains a 12-digit unique identification number issued by UIDAI. For verification, please visit the official UIDAI website.",
+  "pan_card": "This looks like a PAN (Permanent Account Number) card issued by the Income Tax Department. PAN is a vital document for financial transactions and tax filing in India.",
+  "passport": "This is an Indian passport document. For passport services, please visit the Passport Seva Portal at passportindia.gov.in",
+  "driving_license": "This appears to be an Indian driving license. For license-related services, visit the Parivahan portal at parivahan.gov.in",
+  "default": "I apologize, but I am currently unable to analyze this image. Please ensure the image is clear and contains government-related documents or information. You may also try again later when the full analysis service is available."
+};
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint
   app.get("/api/health", (_req, res) => {
@@ -126,72 +135,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Chat API endpoint
   // Image analysis endpoint
-app.post("/api/analyze-image", async (req, res) => {
-  try {
-    const { image_url } = req.body;
-    
-    if (!image_url) {
-      return res.status(400).json({ message: "Image URL is required" });
-    }
-
-    // Define system prompt for image analysis
-    const systemPrompt = `You are an AI assistant for the Government of India's E-governance portal.
-    Analyze this image and provide information relevant to Indian government services, documents, or initiatives.
-    If you see any official documents, describe their validity and relevant department.
-    If you see infrastructure or government buildings, explain their purpose.
-    Keep responses formal and informative.`;
-
+  app.post("/api/analyze-image", async (req, res) => {
     try {
-      const requestBody = {
-        model: "mistral-7b-instruct-v0.3",
-        messages: [
-          { 
-            role: "user", 
-            content: `${systemPrompt}\n\nPlease analyze this image: ${image_url}\n\nDescribe what you see and provide relevant government service information.`
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 500,
-      };
+      const { image_url } = req.body;
 
-      const response = await fetch(LM_STUDIO_API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-        body: JSON.stringify(requestBody)
-      });
-
-      if (!response.ok) {
-        throw new Error(`LM Studio API responded with status: ${response.status}`);
+      if (!image_url) {
+        return res.status(400).json({ message: "Image URL is required" });
       }
 
-      const completion = await response.json();
-      const responseText = completion.choices?.[0]?.message?.content || 
-        "I apologize, but I couldn't analyze the image. Please try again.";
+      try {
+        // Try to use LM Studio for analysis
+        const requestBody = {
+          model: "mistral-7b-instruct-v0.3",
+          messages: [
+            { 
+              role: "user", 
+              content: `Please analyze this image: ${image_url}\n\nDescribe what you see and provide relevant government service information.`
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 500,
+        };
 
-      return res.json({ 
-        message: responseText,
-        source: "lm-studio"
-      });
+        const response = await fetch(LM_STUDIO_API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify(requestBody),
+          signal: AbortSignal.timeout(5000) // 5 second timeout
+        });
 
+        if (!response.ok) {
+          throw new Error(`LM Studio API responded with status: ${response.status}`);
+        }
+
+        const completion = await response.json();
+        const responseText = completion.choices?.[0]?.message?.content || 
+          "I apologize, but I couldn't analyze the image. Please try again.";
+
+        return res.json({ 
+          message: responseText,
+          source: "lm-studio"
+        });
+
+      } catch (error) {
+        console.error("Error connecting to LM Studio:", error);
+
+        if (USE_MOCK_RESPONSES) {
+          // Provide mock response based on image URL patterns
+          let mockResponse = mockImageAnalysis.default;
+          const imageUrlLower = image_url.toLowerCase();
+
+          for (const [key, response] of Object.entries(mockImageAnalysis)) {
+            if (key !== "default" && imageUrlLower.includes(key)) {
+              mockResponse = response;
+              break;
+            }
+          }
+
+          return res.json({
+            message: mockResponse,
+            source: "mock",
+            note: "This is a mock response as the image analysis service is currently unavailable."
+          });
+        }
+
+        return res.status(503).json({
+          message: "Image analysis service is currently unavailable. Please try again later.",
+          error: String(error)
+        });
+      }
     } catch (error) {
-      console.error("Error connecting to LM Studio:", error);
-      return res.status(503).json({
-        message: "Image analysis service is currently unavailable",
-        error: String(error)
+      console.error("Error processing image analysis request:", error);
+      return res.status(500).json({ 
+        message: "An error occurred while analyzing the image" 
       });
     }
-  } catch (error) {
-    console.error("Error processing image analysis request:", error);
-    return res.status(500).json({ 
-      message: "An error occurred while analyzing the image" 
-    });
-  }
-});
+  });
 
-app.post("/api/chat", async (req, res) => {
+  app.post("/api/chat", async (req, res) => {
     try {
       const { message } = req.body;
 
