@@ -70,6 +70,18 @@ export function ImageUpload({ onAnalysis }: { onAnalysis: (message: string) => v
       });
 
       if (!response.ok) {
+        const errorData = await response.json();
+
+        // Handle timeout specifically
+        if (errorData.isTimeout) {
+          toast({
+            variant: "destructive",
+            title: "Analysis Timeout",
+            description: "The analysis is taking longer than expected. Please try again.",
+          });
+          return;
+        }
+
         throw new Error('Analysis failed');
       }
 
@@ -82,6 +94,14 @@ export function ImageUpload({ onAnalysis }: { onAnalysis: (message: string) => v
 
       setAnalysisResult(data.message);
       onAnalysis(data.message);
+
+      // Show success toast if using LM Studio
+      if (data.source === 'lm-studio') {
+        toast({
+          title: "Analysis Complete",
+          description: "Document analysis completed successfully.",
+        });
+      }
     } catch (error) {
       console.error('Error analyzing image:', error);
       toast({
@@ -139,12 +159,12 @@ export function ImageUpload({ onAnalysis }: { onAnalysis: (message: string) => v
 
         {imageUrl && (
           <div className="space-y-4">
-            <img 
-              src={imageUrl} 
-              alt="Preview" 
+            <img
+              src={imageUrl}
+              alt="Preview"
               className="max-w-full h-auto rounded-lg border"
             />
-            <Button 
+            <Button
               onClick={handleAnalyze}
               disabled={isLoading}
               className="w-full"

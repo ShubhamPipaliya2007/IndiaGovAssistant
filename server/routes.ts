@@ -163,6 +163,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           max_tokens: 500,
         };
 
+        // Log the request for debugging
+        console.log("[DEBUG] Sending request to LM Studio:", JSON.stringify(requestBody));
+
         const response = await fetch(LM_STUDIO_API_URL, {
           method: "POST",
           headers: {
@@ -170,7 +173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             "Accept": "application/json"
           },
           body: JSON.stringify(requestBody),
-          signal: AbortSignal.timeout(5000) // 5 second timeout
+          signal: AbortSignal.timeout(30000) // Increased timeout to 30 seconds
         });
 
         if (!response.ok) {
@@ -178,22 +181,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         const completion = await response.json();
-        const responseText = completion.choices?.[0]?.message?.content || 
-          "I apologize, but I couldn't analyze the image. Please try again.";
+        console.log("[DEBUG] LM Studio response:", JSON.stringify(completion));
 
-        // Check if we got a valid response from LM Studio
-        if (responseText && responseText.trim().length > 0) {
+        if (completion?.choices?.[0]?.message?.content) {
+          const responseText = completion.choices[0].message.content.trim();
+          console.log("[DEBUG] Extracted response text:", responseText);
+
           return res.json({ 
-            message: responseText.trim(),
+            message: responseText,
             source: "lm-studio"
           });
         } else {
-          // If response is empty, throw error to trigger mock response
-          throw new Error("Empty response from LM Studio");
+          console.log("[DEBUG] Invalid response format from LM Studio");
+          throw new Error("Invalid response format from LM Studio");
         }
 
       } catch (error) {
         console.error("Error connecting to LM Studio:", error);
+
+        // If it's a timeout error, send a specific message
+        if (error instanceof Error && error.name === 'AbortError') {
+          return res.status(503).json({
+            message: "The analysis is taking longer than expected. Please try again.",
+            error: "Request timeout",
+            isTimeout: true
+          });
+        }
 
         if (USE_MOCK_RESPONSES) {
           // Provide mock response based on image URL patterns
