@@ -7,12 +7,17 @@ import { useSpeech } from "@/hooks/use-speech";
 interface ChatMessageProps {
   message: MessageType;
   voiceEnabled?: boolean;
+  language?: string;
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({ message, voiceEnabled = false }) => {
+const ChatMessage: React.FC<ChatMessageProps> = ({ 
+  message, 
+  voiceEnabled = false,
+  language = 'en' 
+}) => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const { speak, stopSpeaking, ttsSupported } = useSpeech();
-  
+
   // Speak or stop speaking the message content
   const handleSpeakClick = useCallback(() => {
     if (isSpeaking) {
@@ -30,16 +35,16 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, voiceEnabled = false
           textToSpeak = element.props.children;
         }
       }
-      
+
       if (textToSpeak) {
         setIsSpeaking(true);
-        speak(textToSpeak, 1, 1);
-        
+        speak(textToSpeak, 1, 1, language);
+
         // Listen for when speech ends
         const handleSpeechEnd = () => {
           setIsSpeaking(false);
         };
-        
+
         if (window.speechSynthesis) {
           const checkIfSpeaking = setInterval(() => {
             if (!window.speechSynthesis.speaking) {
@@ -47,7 +52,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, voiceEnabled = false
               clearInterval(checkIfSpeaking);
             }
           }, 100);
-          
+
           // Safety timeout to ensure state gets updated even if speech events fail
           setTimeout(() => {
             clearInterval(checkIfSpeaking);
@@ -56,10 +61,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, voiceEnabled = false
         }
       }
     }
-  }, [isSpeaking, message.content, speak, stopSpeaking]);
+  }, [isSpeaking, message.content, speak, stopSpeaking, language]);
 
   if (message.type === "user") {
-    return <UserMessage content={message.content} />;
+    return <UserMessage content={message.content} language={language} />;
   } else {
     return (
       <BotMessage 
@@ -69,6 +74,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, voiceEnabled = false
         isSpeaking={isSpeaking}
         onSpeakClick={handleSpeakClick}
         voiceEnabled={voiceEnabled && ttsSupported}
+        language={language}
       />
     );
   }

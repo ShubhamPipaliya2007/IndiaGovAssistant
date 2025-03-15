@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Bot, MoreVertical } from "lucide-react";
+import { Bot, MoreVertical, Globe } from "lucide-react";
 import ChatMessage from "./message/ChatMessage";
 import UserMessage from "./message/UserMessage";
 import BotMessage from "./message/BotMessage";
@@ -11,6 +11,22 @@ import { VoiceButton } from "@/components/ui/voice-button";
 import { useChat } from "@/lib/useChat";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const SUPPORTED_LANGUAGES = [
+  { code: 'en', name: 'English' },
+  { code: 'hi', name: 'हिंदी' },
+  { code: 'bn', name: 'বাংলা' },
+  { code: 'te', name: 'తెలుగు' },
+  { code: 'ta', name: 'தமிழ்' },
+  { code: 'mr', name: 'मराठी' },
+];
 
 const ChatSection: React.FC = () => {
   const { 
@@ -27,7 +43,9 @@ const ChatSection: React.FC = () => {
     toggleListening,
     toggleAutoPlay,
     autoPlayVoice,
-    speakLastResponse
+    speakLastResponse,
+    selectedLanguage,
+    setSelectedLanguage
   } = useChat();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -70,7 +88,23 @@ const ChatSection: React.FC = () => {
                 </p>
               </div>
             </div>
-            <div>
+            <div className="flex items-center gap-2">
+              <Select
+                value={selectedLanguage}
+                onValueChange={setSelectedLanguage}
+              >
+                <SelectTrigger className="w-[140px]">
+                  <Globe className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SUPPORTED_LANGUAGES.map((lang) => (
+                    <SelectItem key={lang.code} value={lang.code}>
+                      {lang.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Button variant="ghost" size="icon">
                 <MoreVertical className="h-5 w-5 text-muted-foreground" />
               </Button>
@@ -101,6 +135,7 @@ const ChatSection: React.FC = () => {
               key={index} 
               message={message}
               voiceEnabled={ttsSupported}
+              language={selectedLanguage}
             />
           ))}
 
@@ -135,6 +170,7 @@ const ChatSection: React.FC = () => {
               tooltipText={isSpeaking ? "Stop speaking" : "Read aloud"}
               disabled={!messages.length}
               className="ml-auto"
+              language={selectedLanguage}
             />
           )}
         </div>
@@ -149,6 +185,7 @@ const ChatSection: React.FC = () => {
                 onListenClick={toggleListening}
                 tooltipText={isListening ? "Stop listening" : "Voice input"}
                 disabled={isLoading}
+                language={selectedLanguage}
               />
             )}
             <Input
