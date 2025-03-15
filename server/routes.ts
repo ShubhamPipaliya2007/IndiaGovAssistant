@@ -181,10 +181,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const responseText = completion.choices?.[0]?.message?.content || 
           "I apologize, but I couldn't analyze the image. Please try again.";
 
-        return res.json({ 
-          message: responseText,
-          source: "lm-studio"
-        });
+        // Check if we got a valid response from LM Studio
+        if (responseText && responseText.trim().length > 0) {
+          return res.json({ 
+            message: responseText.trim(),
+            source: "lm-studio"
+          });
+        } else {
+          // If response is empty, throw error to trigger mock response
+          throw new Error("Empty response from LM Studio");
+        }
 
       } catch (error) {
         console.error("Error connecting to LM Studio:", error);
@@ -194,6 +200,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           let mockResponse = mockImageAnalysis.default;
           const imageUrlLower = image_url.toLowerCase();
 
+          // Try to detect document type from image URL
           for (const [key, response] of Object.entries(mockImageAnalysis)) {
             if (key !== "default" && imageUrlLower.includes(key)) {
               mockResponse = response;
