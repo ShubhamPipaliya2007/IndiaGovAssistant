@@ -17,32 +17,54 @@ export function ImageUpload({ onAnalysis }: { onAnalysis: (message: string) => v
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Add size validation
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      setError("File size must be less than 10MB");
+      toast({
+        variant: "destructive",
+        title: "Upload Error",
+        description: "File size must be less than 10MB",
+      });
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     setUploadProgress(0);
 
     try {
+      console.log("Starting file upload:", file.name);
       const url = await uploadImage(
         file,
-        (progress) => setUploadProgress(progress),
+        (progress) => {
+          console.log("Upload progress:", progress);
+          setUploadProgress(progress);
+        },
         (error) => {
+          console.error("Upload error in callback:", error);
           setError("Error uploading image. Please try again.");
           toast({
             variant: "destructive",
             title: "Upload Error",
-            description: error.message,
+            description: error.message || "Failed to upload image",
           });
         }
       );
 
+      console.log("Upload successful, URL:", url);
       setImageUrl(url);
       toast({
         title: "Upload Successful",
         description: "Image uploaded successfully",
       });
     } catch (error) {
+      console.error("Upload error in catch:", error);
       setError("Failed to upload image. Please try again.");
-      console.error("Upload error:", error);
+      toast({
+        variant: "destructive",
+        title: "Upload Error",
+        description: error instanceof Error ? error.message : "Failed to upload image",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -53,6 +75,7 @@ export function ImageUpload({ onAnalysis }: { onAnalysis: (message: string) => v
 
     setIsLoading(true);
     try {
+      console.log("Starting image analysis for URL:", imageUrl);
       const response = await fetch('/api/analyze-image', {
         method: 'POST',
         headers: {
