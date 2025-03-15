@@ -11,11 +11,12 @@ export function useChat() {
   const [inputValue, setInputValue] = useState("");
   const [isLmStudioAvailable, setIsLmStudioAvailable] = useState<boolean | null>(null);
   const [autoPlayVoice, setAutoPlayVoice] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState("en");
   const lastResponseRef = useRef<string | null>(null);
-  
+
   const { toast } = useToast();
-  
-  // Initialize speech recognition
+
+  // Initialize speech recognition with selected language
   const { 
     isListening, 
     isSpeaking, 
@@ -34,7 +35,7 @@ export function useChat() {
         sendMessage(text);
       }
     },
-    language: "en-IN" // Default to English (India)
+    language: selectedLanguage // Use selected language for speech recognition
   });
 
   // Check if LM Studio is available when component mounts
@@ -48,7 +49,7 @@ export function useChat() {
           models?: any[];
         };
         setIsLmStudioAvailable(data.status === "available");
-        
+
         if (data.status !== "available") {
           console.info("LM Studio is not available:", data.message);
           // Show toast only if specifically not available (not on error or unknown status)
@@ -65,7 +66,7 @@ export function useChat() {
         setIsLmStudioAvailable(false);
       }
     };
-    
+
     checkLmStudioStatus();
   }, [toast]);
 
@@ -100,34 +101,37 @@ export function useChat() {
   // Function to speak the last response
   const speakLastResponse = useCallback(() => {
     if (!lastResponseRef.current) return;
-    
+
     if (isSpeaking) {
       stopSpeaking();
     } else {
-      speak(lastResponseRef.current);
+      speak(lastResponseRef.current, 1, 1, selectedLanguage);
     }
-  }, [isSpeaking, speak, stopSpeaking]);
+  }, [isSpeaking, speak, stopSpeaking, selectedLanguage]);
 
   const sendMessage = useCallback(async (message: string) => {
     // Add user message to chat
     setMessages((prev) => [...prev, { type: "user", content: message }]);
     setInputValue("");
     setIsLoading(true);
-    
+
     // If we're listening, stop
     if (isListening) {
       stopListening();
     }
 
     try {
-      const response = await apiRequest("POST", "/api/chat", { message });
+      const response = await apiRequest("POST", "/api/chat", { 
+        message,
+        language: selectedLanguage // Pass selected language to API
+      });
       const data: ChatResponseType = await response.json();
-      
+
       // Store the response text for voice playback
       const responseText = data.formatted_content 
         ? (typeof data.formatted_content === 'string' ? data.formatted_content : data.message) 
         : data.message;
-      
+
       lastResponseRef.current = responseText;
 
       // Add bot response to chat with mock info if applicable
@@ -140,12 +144,12 @@ export function useChat() {
           note: data.note
         },
       ]);
-      
+
       // If voice autoplay is enabled, speak the response
       if (autoPlayVoice && ttsSupported) {
-        speak(responseText);
+        speak(responseText, 1, 1, selectedLanguage);
       }
-      
+
       // If this is a mock response and we haven't shown a toast yet about it
       if (data.source === "mock" && isLmStudioAvailable !== false) {
         setIsLmStudioAvailable(false);
@@ -162,7 +166,7 @@ export function useChat() {
         description: "Failed to get a response. Please try again.",
         variant: "destructive",
       });
-      
+
       // Add error message to chat
       const errorMessage = "Sorry, I'm having trouble responding right now. Please try again later.";
       setMessages((prev) => [
@@ -172,12 +176,12 @@ export function useChat() {
           content: errorMessage,
         },
       ]);
-      
+
       lastResponseRef.current = errorMessage;
     } finally {
       setIsLoading(false);
     }
-  }, [autoPlayVoice, isListening, stopListening, toast, ttsSupported, speak, isLmStudioAvailable]);
+  }, [autoPlayVoice, isListening, stopListening, toast, ttsSupported, speak, isLmStudioAvailable, selectedLanguage]);
 
   const handleSuggestionClick = useCallback((suggestion: string) => {
     setInputValue(suggestion);
@@ -199,6 +203,9 @@ export function useChat() {
     toggleListening,
     toggleAutoPlay,
     autoPlayVoice,
-    speakLastResponse
+    speakLastResponse,
+    // Language selection
+    selectedLanguage,
+    setSelectedLanguage
   };
 }
