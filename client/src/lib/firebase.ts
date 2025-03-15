@@ -7,7 +7,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyD9t00gFj0ANHdLEmAPThiuBp-c4Xj-vwU",
   authDomain: "ai-governance-eda26.firebaseapp.com",
   projectId: "ai-governance-eda26",
-  storageBucket: "ai-governance-eda26.appspot.com", // Fixed storage bucket URL
+  storageBucket: "ai-governance-eda26.firebasestorage.app",
   messagingSenderId: "573119711660",
   appId: "1:573119711660:web:65f9a02520068d569fd209",
   measurementId: "G-4M13QN7107"
@@ -50,12 +50,10 @@ export const uploadImage = async (
   onError?: (error: Error) => void
 ): Promise<string> => {
   try {
-    console.log("Starting upload for file:", file.name);
     const timestamp = Date.now();
     const storagePath = `uploads/${timestamp}_${file.name}`;
     const storageRef = ref(storage, storagePath);
 
-    console.log("Created storage reference:", storagePath);
     const uploadTask = uploadBytesResumable(storageRef, file);
 
     return new Promise((resolve, reject) => {
@@ -63,7 +61,6 @@ export const uploadImage = async (
         "state_changed",
         (snapshot) => {
           const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          console.log("Upload progress:", progress);
           onProgress?.(progress);
         },
         (error) => {
@@ -73,9 +70,7 @@ export const uploadImage = async (
         },
         async () => {
           try {
-            console.log("Upload completed, getting download URL");
             const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            console.log("Download URL obtained:", downloadURL);
             resolve(downloadURL);
           } catch (error) {
             console.error("Error getting download URL:", error);
