@@ -23,11 +23,17 @@ const USE_MOCK_RESPONSES = true;
 
 // Mock responses for image analysis
 const mockImageAnalysis = {
-  "aadhar_card": "This appears to be an Aadhaar card. Aadhaar is India's biometric ID system. The card contains a 12-digit unique identification number issued by UIDAI. For verification, please visit the official UIDAI website.",
-  "pan_card": "This looks like a PAN (Permanent Account Number) card issued by the Income Tax Department. PAN is a vital document for financial transactions and tax filing in India.",
-  "passport": "This is an Indian passport document. For passport services, please visit the Passport Seva Portal at passportindia.gov.in",
-  "driving_license": "This appears to be an Indian driving license. For license-related services, visit the Parivahan portal at parivahan.gov.in",
-  "default": "I apologize, but I am currently unable to analyze this image. Please ensure the image is clear and contains government-related documents or information. You may also try again later when the full analysis service is available."
+  "aadhar_card": "This appears to be an Aadhaar card. Aadhaar is India's biometric ID system. Here's what you can do:\n\n1. Verify your Aadhaar: Visit https://myaadhaar.uidai.gov.in\n2. Update details: Use the UIDAI self-service portal\n3. Download e-Aadhaar: Available at https://eaadhaar.uidai.gov.in\n4. Check authentication history: Log into the UIDAI portal\n\nFor any issues, contact UIDAI helpline: 1947",
+
+  "pan_card": "This looks like a PAN (Permanent Account Number) card issued by the Income Tax Department. Available services:\n\n1. Verify PAN: https://tin.tin.nsdl.com/pantan/CheckPAN.html\n2. Apply for new PAN: https://www.onlineservices.nsdl.com\n3. Link PAN with Aadhaar: https://eportal.incometax.gov.in\n4. Update PAN details: Visit your nearest PAN center\n\nFor assistance, contact: 1800-180-1961",
+
+  "passport": "This is an Indian passport document. Available passport services:\n\n1. Apply for new passport: https://passportindia.gov.in\n2. Track application status: Use file number on passport website\n3. Schedule appointment: Through Passport Seva Portal\n4. Download forms: Available on passport website\n\nPassport Seva Helpline: 1800-258-1800",
+
+  "driving_license": "This appears to be an Indian driving license. Services available:\n\n1. Verify license: https://parivahan.gov.in\n2. Apply for renewal: Visit your Regional Transport Office\n3. Update address: Through Parivahan portal\n4. Check challans: https://echallan.parivahan.gov.in\n\nContact RTO helpline: 1800-258-6000",
+
+  "voter_id": "This looks like a Voter ID card (EPIC). Available services:\n\n1. Verify voter ID: https://nvsp.in\n2. Update voter details: Visit Electoral Registration Officer\n3. Download e-EPIC: https://voterportal.eci.gov.in\n4. Find polling booth: Through NVSP portal\n\nElection Commission helpline: 1950",
+
+  "default": "I apologize, but I am currently unable to analyze this image in detail. For the best results:\n\n1. Ensure the image is clear and well-lit\n2. Document should be properly oriented\n3. All text should be clearly visible\n4. Try uploading a different government document\n\nSupported documents include Aadhaar, PAN, Passport, Driving License, and Voter ID.\n\nThe full analysis service will be available soon."
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
