@@ -154,11 +154,10 @@ export function ImageUpload({ onAnalysis }: { onAnalysis: (message: string) => v
           <div className="flex items-center gap-2 text-muted-foreground text-sm bg-muted/50 p-3 rounded-lg border border-border">
             <Info className="h-4 w-4 flex-shrink-0" />
             <div className="space-y-1">
-              <p className="font-medium">Using Document Analysis Preview</p>
+              <p className="font-medium">Document Analysis Preview</p>
               <p className="text-xs">
-                Currently using mock responses for quick document identification. 
-                Upload government documents like Aadhaar, PAN, passport, or driving license for basic information.
-                Full AI-powered analysis coming soon.
+                Available document types: Aadhaar, PAN, Passport, Driving License, and Voter ID.
+                Each analysis includes relevant service links and contact information.
               </p>
             </div>
           </div>
