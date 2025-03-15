@@ -125,7 +125,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Chat API endpoint
-  app.post("/api/chat", async (req, res) => {
+  // Image analysis endpoint
+app.post("/api/analyze-image", async (req, res) => {
+  try {
+    const { image_url } = req.body;
+    
+    if (!image_url) {
+      return res.status(400).json({ message: "Image URL is required" });
+    }
+
+    // Define system prompt for image analysis
+    const systemPrompt = `You are an AI assistant for the Government of India's E-governance portal.
+    Analyze this image and provide information relevant to Indian government services, documents, or initiatives.
+    If you see any official documents, describe their validity and relevant department.
+    If you see infrastructure or government buildings, explain their purpose.
+    Keep responses formal and informative.`;
+
+    try {
+      const requestBody = {
+        model: "mistral-7b-instruct-v0.3",
+        messages: [
+          { 
+            role: "user", 
+            content: `${systemPrompt}\n\nPlease analyze this image: ${image_url}\n\nDescribe what you see and provide relevant government service information.`
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 500,
+      };
+
+      const response = await fetch(LM_STUDIO_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!response.ok) {
+        throw new Error(`LM Studio API responded with status: ${response.status}`);
+      }
+
+      const completion = await response.json();
+      const responseText = completion.choices?.[0]?.message?.content || 
+        "I apologize, but I couldn't analyze the image. Please try again.";
+
+      return res.json({ 
+        message: responseText,
+        source: "lm-studio"
+      });
+
+    } catch (error) {
+      console.error("Error connecting to LM Studio:", error);
+      return res.status(503).json({
+        message: "Image analysis service is currently unavailable",
+        error: String(error)
+      });
+    }
+  } catch (error) {
+    console.error("Error processing image analysis request:", error);
+    return res.status(500).json({ 
+      message: "An error occurred while analyzing the image" 
+    });
+  }
+});
+
+app.post("/api/chat", async (req, res) => {
     try {
       const { message } = req.body;
 
