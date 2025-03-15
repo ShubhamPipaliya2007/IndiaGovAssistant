@@ -194,20 +194,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         const completion = await response.json();
-        console.log("[DEBUG] LM Studio response:", JSON.stringify(completion));
+        console.log("LM Studio response:", JSON.stringify(completion, null, 2));
 
+        // Check if we have a valid completion response
         if (completion?.choices?.[0]?.message?.content) {
           const responseText = completion.choices[0].message.content.trim();
-          console.log("[DEBUG] Extracted response text:", responseText);
-
           return res.json({ 
             message: responseText,
-            source: "lm-studio"
+            source: "lm-studio",
+            rawResponse: completion // Include raw response for debugging
           });
-        } else {
-          console.log("[DEBUG] Invalid response format from LM Studio");
-          throw new Error("Invalid response format from LM Studio");
         }
+
+        // If response format is invalid, throw error to trigger fallback
+        throw new Error("Invalid response format from LM Studio");
 
       } catch (error) {
         console.error("Error connecting to LM Studio:", error);
@@ -306,7 +306,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!response.ok) {
           const errorText = await response.text();
           console.error(`LM Studio API responded with status: ${response.status}`, errorText);
-          
+
           // Check specifically for jinja template error related to roles
           if (errorText.includes("Only user and assistant roles are supported")) {
             console.error("LM Studio doesn't support system role, converting to user message format");
@@ -324,7 +324,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error("LM Studio API error:", completion.error);
           throw new Error(`LM Studio API error: ${completion.error.message || JSON.stringify(completion.error)}`);
         }
-        
+
         // Handle prediction-error specifically
         if (completion.status === "error" && completion.message?.includes("prediction-error")) {
           console.error("LM Studio prediction error:", completion.message);
