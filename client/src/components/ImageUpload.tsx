@@ -12,6 +12,7 @@ export function ImageUpload({ onAnalysis }: { onAnalysis: (message: string) => v
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [isMockResponse, setIsMockResponse] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -22,6 +23,7 @@ export function ImageUpload({ onAnalysis }: { onAnalysis: (message: string) => v
     setError(null);
     setUploadProgress(0);
     setIsMockResponse(false);
+    setAnalysisResult(null);
 
     try {
       const url = await uploadImage(
@@ -56,6 +58,7 @@ export function ImageUpload({ onAnalysis }: { onAnalysis: (message: string) => v
     setIsLoading(true);
     setError(null);
     setIsMockResponse(false);
+    setAnalysisResult(null);
 
     try {
       const response = await fetch('/api/analyze-image', {
@@ -77,6 +80,7 @@ export function ImageUpload({ onAnalysis }: { onAnalysis: (message: string) => v
         setIsMockResponse(true);
       }
 
+      setAnalysisResult(data.message);
       onAnalysis(data.message);
     } catch (error) {
       console.error('Error analyzing image:', error);
@@ -147,6 +151,17 @@ export function ImageUpload({ onAnalysis }: { onAnalysis: (message: string) => v
             >
               {isLoading ? 'Analyzing...' : 'Analyze Image'}
             </Button>
+          </div>
+        )}
+
+        {analysisResult && (
+          <div className="mt-4 p-4 bg-card rounded-lg border">
+            <h3 className="text-lg font-semibold mb-2">Analysis Result</h3>
+            <div className="prose prose-sm max-w-none">
+              {analysisResult.split('\n').map((line, index) => (
+                <p key={index} className="mb-2">{line}</p>
+              ))}
+            </div>
           </div>
         )}
 
