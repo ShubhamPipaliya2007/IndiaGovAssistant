@@ -177,15 +177,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Log the request for debugging
         console.log("[DEBUG] Sending request to LM Studio:", JSON.stringify(requestBody));
 
-        const response = await fetch(LM_STUDIO_API_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-          },
-          body: JSON.stringify(requestBody),
-          signal: AbortSignal.timeout(60000) // Increased timeout to 60 seconds
-        });
+        // Try the request up to 3 times with increasing timeouts
+        let attempt = 0;
+        let response;
+        while (attempt < 3) {
+          try {
+            response = await fetch(LM_STUDIO_API_URL, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+              },
+              body: JSON.stringify(requestBody),
+              signal: AbortSignal.timeout((attempt + 1) * 60000) // Increase timeout with each attempt
+            });
+            break; // If successful, exit the loop
+          } catch (error) {
+            attempt++;
+            if (attempt === 3) throw error; // Re-throw on final attempt
+            console.log(`Attempt ${attempt} failed, retrying...`);
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
+          }
+        }
 
         if (!response.ok) {
           const errorText = await response.text();
