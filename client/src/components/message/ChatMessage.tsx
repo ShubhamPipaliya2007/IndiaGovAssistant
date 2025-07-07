@@ -7,17 +7,12 @@ import { useSpeech } from "@/hooks/use-speech";
 interface ChatMessageProps {
   message: MessageType;
   voiceEnabled?: boolean;
-  language?: string;
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({ 
-  message, 
-  voiceEnabled = false,
-  language = 'en' 
-}) => {
+const ChatMessage: React.FC<ChatMessageProps> = ({ message, voiceEnabled = false }) => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const { speak, stopSpeaking, ttsSupported } = useSpeech();
-
+  
   // Speak or stop speaking the message content
   const handleSpeakClick = useCallback(() => {
     if (isSpeaking) {
@@ -35,16 +30,16 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           textToSpeak = element.props.children;
         }
       }
-
+      
       if (textToSpeak) {
         setIsSpeaking(true);
-        speak(textToSpeak, 1, 1, language);
-
+        speak(textToSpeak, 1, 1);
+        
         // Listen for when speech ends
         const handleSpeechEnd = () => {
           setIsSpeaking(false);
         };
-
+        
         if (window.speechSynthesis) {
           const checkIfSpeaking = setInterval(() => {
             if (!window.speechSynthesis.speaking) {
@@ -52,7 +47,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
               clearInterval(checkIfSpeaking);
             }
           }, 100);
-
+          
           // Safety timeout to ensure state gets updated even if speech events fail
           setTimeout(() => {
             clearInterval(checkIfSpeaking);
@@ -61,10 +56,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         }
       }
     }
-  }, [isSpeaking, message.content, speak, stopSpeaking, language]);
+  }, [isSpeaking, message.content, speak, stopSpeaking]);
 
   if (message.type === "user") {
-    return <UserMessage content={message.content} language={language} />;
+    return <UserMessage content={message.content} />;
   } else {
     return (
       <BotMessage 
@@ -74,7 +69,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         isSpeaking={isSpeaking}
         onSpeakClick={handleSpeakClick}
         voiceEnabled={voiceEnabled && ttsSupported}
-        language={language}
       />
     );
   }

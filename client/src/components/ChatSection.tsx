@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Bot, MoreVertical, Globe } from "lucide-react";
+import { Bot, MoreVertical, Upload } from "lucide-react";
 import ChatMessage from "./message/ChatMessage";
 import UserMessage from "./message/UserMessage";
 import BotMessage from "./message/BotMessage";
@@ -11,24 +11,16 @@ import { VoiceButton } from "@/components/ui/voice-button";
 import { useChat } from "@/lib/useChat";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
-const SUPPORTED_LANGUAGES = [
-  { code: 'en', name: 'English' },
-  { code: 'hi', name: 'हिंदी' },
-  { code: 'bn', name: 'বাংলা' },
-  { code: 'te', name: 'తెలుగు' },
-  { code: 'ta', name: 'தமிழ்' },
-  { code: 'mr', name: 'मराठी' },
-];
+export interface ChatSectionProps {
+  showUploadButton?: boolean;
+  onUploadClick?: () => void;
+}
 
-const ChatSection: React.FC = () => {
+const ChatSection: React.FC<ChatSectionProps> = ({ 
+  showUploadButton = true, 
+  onUploadClick 
+}) => {
   const { 
     messages, 
     isLoading, 
@@ -43,9 +35,7 @@ const ChatSection: React.FC = () => {
     toggleListening,
     toggleAutoPlay,
     autoPlayVoice,
-    speakLastResponse,
-    selectedLanguage,
-    setSelectedLanguage
+    speakLastResponse
   } = useChat();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -70,7 +60,7 @@ const ChatSection: React.FC = () => {
   ];
 
   return (
-    <section className="w-full md:w-2/3 lg:w-3/4 order-1 md:order-2">
+    <section className="flex-1 flex flex-col">
       <div className="bg-background rounded-xl shadow-md overflow-hidden flex flex-col h-[calc(100vh-160px)] border border-border">
         {/* Chat Header */}
         <div className="p-4 border-b border-border bg-background">
@@ -88,23 +78,7 @@ const ChatSection: React.FC = () => {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Select
-                value={selectedLanguage}
-                onValueChange={setSelectedLanguage}
-              >
-                <SelectTrigger className="w-[140px]">
-                  <Globe className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Select language" />
-                </SelectTrigger>
-                <SelectContent>
-                  {SUPPORTED_LANGUAGES.map((lang) => (
-                    <SelectItem key={lang.code} value={lang.code}>
-                      {lang.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div>
               <Button variant="ghost" size="icon">
                 <MoreVertical className="h-5 w-5 text-muted-foreground" />
               </Button>
@@ -135,7 +109,6 @@ const ChatSection: React.FC = () => {
               key={index} 
               message={message}
               voiceEnabled={ttsSupported}
-              language={selectedLanguage}
             />
           ))}
 
@@ -170,7 +143,6 @@ const ChatSection: React.FC = () => {
               tooltipText={isSpeaking ? "Stop speaking" : "Read aloud"}
               disabled={!messages.length}
               className="ml-auto"
-              language={selectedLanguage}
             />
           )}
         </div>
@@ -185,7 +157,6 @@ const ChatSection: React.FC = () => {
                 onListenClick={toggleListening}
                 tooltipText={isListening ? "Stop listening" : "Voice input"}
                 disabled={isLoading}
-                language={selectedLanguage}
               />
             )}
             <Input
@@ -196,9 +167,23 @@ const ChatSection: React.FC = () => {
               onChange={(e) => setInputValue(e.target.value)}
               disabled={isListening}
             />
+            
+            {showUploadButton && onUploadClick && (
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="border-[#000080] text-[#000080] hover:bg-[#000080]/10"
+                onClick={onUploadClick}
+                title="Upload Document for Analysis"
+              >
+                <Upload className="h-4 w-4" />
+              </Button>
+            )}
+            
             <Button
               type="submit"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              className="bg-[#000080] hover:bg-[#000060] text-primary-foreground"
               disabled={(!inputValue.trim() || isLoading) && !isListening}
             >
               <svg
